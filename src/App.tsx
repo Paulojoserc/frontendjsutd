@@ -11,9 +11,9 @@ interface ClienteProps {
 
 export default function App() {
   const [clientes, setClientes] = useState<ClienteProps[]>([])
-  const nameRef =  useRef<HTMLInputElement | null>(null)
-  const idadeRef =  useRef<HTMLInputElement | null>(null)
-  const emailRef =  useRef<HTMLInputElement | null>(null)
+  const nameRef = useRef<HTMLInputElement | null>(null)
+  const idadeRef = useRef<HTMLInputElement | null>(null)
+  const emailRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     loadCliente();
@@ -24,9 +24,35 @@ export default function App() {
     setClientes(response.data);
   }
 
-function handleSubmit(event: FormEvent){
-  event.preventDefault();
-}
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (!nameRef.current?.value || !idadeRef.current?.value || !emailRef.current?.value) return;
+
+    const response = await api.post("/cliente", {
+      name: nameRef.current?.value,
+      idade: idadeRef.current?.value,
+      email: emailRef.current?.value
+    })
+   setClientes (allClientes => [...allClientes, response.data])
+   nameRef.current.value = ""
+   idadeRef.current.value = ""
+   emailRef.current.value = ""
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await api.delete('/cliente', {
+        params: {
+          id: id,
+        },
+      })
+
+      const allCustomers = clientes.filter(cliente => cliente.id !== id)
+      setClientes(allCustomers)
+    } catch (err) {
+      console.log(err)
+    }
+  }
 
   return (
     <div className="w-full min-h-screen bg-gray-900 flex justify-center px-4">
@@ -47,7 +73,7 @@ function handleSubmit(event: FormEvent){
             className="w-full md-5 p-2 rounded"
             ref={idadeRef}
           />
-          <label className="font-medium text-white">Nome:</label>
+          <label className="font-medium text-white">Email:</label>
           <input type="email"
             placeholder="Digite seu email completo..."
             className="w-full md-5 p-2 rounded"
@@ -61,7 +87,11 @@ function handleSubmit(event: FormEvent){
               <p><span>Nome:</span> {cliente.name}</p>
               <p><span>Idade:</span> {cliente.idade}</p>
               <p><span>Email:</span> {cliente.email}</p>
-              <button className="bg-red-500 w-7 h-7 flex items-center justify-center rounded-lg absolute right-0 -top-2">
+              <button 
+              className="bg-red-500 w-7 h-7 flex items-center justify-center rounded-lg absolute right-0 -bottom-2"
+              onClick={()=> handleDelete(cliente.id)}
+              >
+                 
                 <FiTrash size={18} color="#FFF" />
               </button>
             </article>
